@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPEN Line History - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .main-pane {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .history-pane {
+            width: 400px;
+            border-left: 2px solid #ddd;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .controls {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .controls h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            background: #1976D2;
+        }
+
+        .line-list {
+            list-style: none;
+        }
+
+        .line-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .line-item:hover {
+            background: #f0f7ff;
+            border-color: #2196F3;
+        }
+
+        .line-item.active {
+            background: #e3f2fd;
+            border-color: #2196F3;
+            border-left-width: 4px;
+        }
+
+        .line-text {
+            font-family: monospace;
+            margin-top: 0.5rem;
+            color: #333;
+        }
+
+        .info {
+            padding: 1rem;
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .info h3 {
+            margin-bottom: 0.5rem;
+            color: #1976D2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .history-pane {
+                width: 100%;
+                border-left: none;
+                border-top: 2px solid #ddd;
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-pane">
+            <h1>TPEN Line History Demo</h1>
+            
+            <div class="info">
+                <h3>About this component</h3>
+                <p>This component displays the history of transcription lines from TPEN projects. Click on a line below to see its history in the right pane. The history includes previous versions of the text and any changes to image boundings.</p>
+            </div>
+
+            <div class="controls">
+                <h2>Sample Lines</h2>
+                <p>Click on a line to view its history:</p>
+            </div>
+
+            <ul class="line-list" id="lineList">
+                <!-- Lines will be added here dynamically -->
+            </ul>
+        </div>
+
+        <div class="history-pane">
+            <tpen-line-history id="historyComponent"></tpen-line-history>
+        </div>
+    </div>
+
+    <script type="module">
+        import './tpen-line-history.js';
+
+        // Mock TPEN.eventdispatcher for demo purposes
+        window.TPEN = {
+            eventdispatcher: new EventTarget()
+        };
+
+        // Sample line data with history
+        const sampleLines = [
+            {
+                '@id': 'line1',
+                uri: 'line1',
+                text: 'The quick brown fox jumps over the lazy dog.',
+                x: 100,
+                y: 150,
+                width: 800,
+                height: 50,
+                modified: new Date('2025-01-15T10:30:00Z').toISOString(),
+                history: [
+                    {
+                        text: 'The quick brown fox jumps over the lazy dog.',
+                        x: 100,
+                        y: 150,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-15T10:30:00Z').toISOString()
+                    },
+                    {
+                        text: 'The quick brown fox jumps over the lazy dog',
+                        x: 100,
+                        y: 150,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-15T09:15:00Z').toISOString()
+                    },
+                    {
+                        text: 'The quick brown fox',
+                        x: 95,
+                        y: 145,
+                        width: 750,
+                        height: 48,
+                        modified: new Date('2025-01-14T16:45:00Z').toISOString()
+                    }
+                ]
+            },
+            {
+                '@id': 'line2',
+                uri: 'line2',
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                x: 100,
+                y: 220,
+                width: 800,
+                height: 50,
+                modified: new Date('2025-01-16T14:20:00Z').toISOString(),
+                history: [
+                    {
+                        text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                        x: 100,
+                        y: 220,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-16T14:20:00Z').toISOString()
+                    },
+                    {
+                        text: 'Lorem ipsum dolor sit amet',
+                        x: 100,
+                        y: 220,
+                        width: 600,
+                        height: 50,
+                        modified: new Date('2025-01-16T11:00:00Z').toISOString()
+                    }
+                ]
+            },
+            {
+                '@id': 'line3',
+                uri: 'line3',
+                text: 'Sed ut perspiciatis unde omnis iste natus error.',
+                x: 100,
+                y: 290,
+                width: 800,
+                height: 50,
+                modified: new Date('2025-01-17T08:00:00Z').toISOString(),
+                history: [
+                    {
+                        text: 'Sed ut perspiciatis unde omnis iste natus error.',
+                        x: 100,
+                        y: 290,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-17T08:00:00Z').toISOString()
+                    },
+                    {
+                        text: 'Sed ut perspiciatis unde omnis iste natus error',
+                        x: 100,
+                        y: 290,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-16T22:30:00Z').toISOString()
+                    },
+                    {
+                        text: 'Sed ut perspiciatis',
+                        x: 98,
+                        y: 288,
+                        width: 400,
+                        height: 48,
+                        modified: new Date('2025-01-16T20:00:00Z').toISOString()
+                    },
+                    {
+                        text: '',
+                        x: 100,
+                        y: 290,
+                        width: 800,
+                        height: 50,
+                        modified: new Date('2025-01-16T19:00:00Z').toISOString()
+                    }
+                ]
+            }
+        ];
+
+        const lineList = document.getElementById('lineList');
+        const historyComponent = document.getElementById('historyComponent');
+        let selectedLineElement = null;
+
+        // Render sample lines
+        sampleLines.forEach(line => {
+            const li = document.createElement('li');
+            li.className = 'line-item';
+            li.innerHTML = `
+                <div><strong>Line ${line['@id']}</strong></div>
+                <div class="line-text">${line.text || '(empty)'}</div>
+            `;
+            
+            li.addEventListener('click', () => {
+                // Remove active class from previously selected line
+                if (selectedLineElement) {
+                    selectedLineElement.classList.remove('active');
+                }
+                
+                // Add active class to clicked line
+                li.classList.add('active');
+                selectedLineElement = li;
+
+                // Simulate fetching history by using our mock data
+                const lineWithHistory = { ...line };
+                
+                // Mock the fetch response
+                const originalFetch = window.fetch;
+                window.fetch = async (url) => {
+                    if (url.endsWith('/history')) {
+                        return {
+                            ok: true,
+                            json: async () => line.history || [line]
+                        };
+                    }
+                    return originalFetch(url);
+                };
+
+                // Update the history component
+                historyComponent.updateLine(lineWithHistory);
+
+                // Restore original fetch
+                window.fetch = originalFetch;
+
+                // Also dispatch event to TPEN.eventdispatcher
+                window.TPEN.eventdispatcher.dispatchEvent(
+                    new CustomEvent('line-selected', { detail: lineWithHistory })
+                );
+            });
+
+            lineList.appendChild(li);
+        });
+
+        // Auto-select first line
+        if (lineList.firstChild) {
+            lineList.firstChild.click();
+        }
+    </script>
+</body>
+</html>

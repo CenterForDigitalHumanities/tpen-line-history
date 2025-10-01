@@ -1,0 +1,28 @@
+{
+  "name": "tpen-line-history",
+  "version": "1.0.0",
+  "description": "A custom web component for displaying the history of transcription lines from TPEN projects",
+  "main": "tpen-line-history.js",
+  "type": "module",
+  "scripts": {
+    "demo": "echo 'Open demo.html in your browser to see the component in action'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CenterForDigitalHumanities/tpen-line-history.git"
+  },
+  "keywords": [
+    "tpen",
+    "transcription",
+    "history",
+    "web-component",
+    "custom-element",
+    "rerum"
+  ],
+  "author": "Research Computing Group",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CenterForDigitalHumanities/tpen-line-history/issues"
+  },
+  "homepage": "https://github.com/CenterForDigitalHumanities/tpen-line-history#readme"
+}
