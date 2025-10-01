@@ -19,24 +19,24 @@ import { RerumHistoryData } from 'https://cubap.github.io/rerum-history-componen
  */
 class TPENLineHistory extends HTMLElement {
     constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
-        this.currentLine = null;
-        this.historyData = [];
-        this.rerumHistoryData = null;
-        this.historyGraph = null;
+        super()
+        this.attachShadow({ mode: 'open' })
+        this.currentLine = null
+        this.historyData = []
+        this.rerumHistoryData = null
+        this.historyGraph = null
     }
 
     connectedCallback() {
-        this.render();
-        this.setupEventListeners();
+        this.render()
+        this.setupEventListeners()
     }
 
     disconnectedCallback() {
         // Clean up RerumHistoryData instance to prevent memory leaks
         if (this.rerumHistoryData) {
-            this.rerumHistoryData.abort();
-            this.rerumHistoryData = null;
+            this.rerumHistoryData.abort()
+            this.rerumHistoryData = null
         }
     }
 
@@ -46,8 +46,8 @@ class TPENLineHistory extends HTMLElement {
     setupEventListeners() {
         // Listen for active line changes from TPEN.eventDispatcher
         TPEN.eventDispatcher.on('tpen-set-line', (event) => {
-            this.handleLineChange(event.detail);
-        });
+            this.handleLineChange(event.detail)
+        })
     }
 
     /**
@@ -55,13 +55,13 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data from the event
      */
     async handleLineChange(lineData) {
-        if (!lineData) return;
+        if (!lineData) return
 
-        this.currentLine = lineData;
+        this.currentLine = lineData
 
         // Fetch history for this line
-        await this.fetchLineHistory(lineData);
-        this.render();
+        await this.fetchLineHistory(lineData)
+        this.render()
     }
 
     // tpen-transcription-line-save-success event when a line is updated
@@ -73,37 +73,63 @@ class TPENLineHistory extends HTMLElement {
     async fetchLineHistory(lineData) {
         // If the line has a URI, fetch its history using RerumHistoryData
         if (lineData.uri || lineData['@id']) {
-            const uri = lineData.uri || lineData['@id'];
+            const uri = lineData.uri || lineData['@id']
             try {
                 // Clean up previous history data instance
                 if (this.rerumHistoryData) {
-                    this.rerumHistoryData.abort();
+                    this.rerumHistoryData.abort()
                 }
-
-                this.rerumHistoryData = new RerumHistoryData(uri);
-                await this.rerumHistoryData.fetch();
-
-                this.historyData = this.rerumHistoryData.getItems();
-                this.historyGraph = this.rerumHistoryData.getGraph();
-
-                // Sort by timestamp (most recent first) if we don't have graph structure
+                
+                this.rerumHistoryData = new RerumHistoryData(uri)
+                await this.rerumHistoryData.fetch()
+                
+                this.historyData = this.rerumHistoryData.getItems()
+                this.historyGraph = this.rerumHistoryData.getGraph()                // Sort by timestamp (most recent first) if we don't have graph structure
                 if (this.historyData.length > 0) {
                     this.historyData.sort((a, b) => {
-                        const timestampA = this.getTimestamp(a);
-                        const timestampB = this.getTimestamp(b);
-                        return timestampB - timestampA;
-                    });
+                        const timestampA = this.getTimestamp(a)
+                        const timestampB = this.getTimestamp(b)
+                        return timestampB - timestampA
+                    })
                 }
             } catch (error) {
-                console.warn('Could not fetch line history with RerumHistoryData:', error);
+                console.warn('Could not fetch line history with RerumHistoryData:', error)
                 // Fallback to simple array with current line
-                this.historyData = [lineData];
-                this.historyGraph = null;
+                this.historyData = [lineData]
+                this.historyGraph = null
             }
         } else {
             // No URI, just show current state
-            this.historyData = [lineData];
-            this.historyGraph = null;
+            this.historyData = [lineData]
+            this.historyGraph = null
+        }
+
+        // If the line has a URI, fetch its history using RerumHistoryData
+        try {
+            // Clean up previous history data instance
+            if (this.rerumHistoryData) {
+                this.rerumHistoryData.abort()
+            }
+
+            this.rerumHistoryData = new RerumHistoryData(uri)
+            await this.rerumHistoryData.fetch()
+
+            this.historyData = this.rerumHistoryData.getItems()
+            this.historyGraph = this.rerumHistoryData.getGraph()
+
+            // Sort by timestamp (most recent first) if we don't have graph structure
+            if (this.historyData.length > 0) {
+                this.historyData.sort((a, b) => {
+                    const timestampA = this.getTimestamp(a)
+                    const timestampB = this.getTimestamp(b)
+                    return timestampB - timestampA
+                })
+            }
+        } catch (error) {
+            console.warn('Could not fetch line history with RerumHistoryData:', error)
+            // Fallback to simple array with current line
+            this.historyData = [lineData]
+            this.historyGraph = null
         }
     }
 
@@ -113,19 +139,40 @@ class TPENLineHistory extends HTMLElement {
      * @returns {Number} Timestamp in milliseconds
      */
     getTimestamp(line) {
-        const createdAt = line?.__rerum?.createdAt ?? line?.createdAt ?? line?.modified ?? line?.created ?? line?.timestamp;
-        const isOverwritten = line?.__rerum?.isOverwritten ?? line?.isOverwritten;
+        const createdAt = line?.__rerum?.createdAt ?? line?.createdAt ?? line?.modified ?? line?.created ?? line?.timestamp
+        const isOverwritten = line?.__rerum?.isOverwritten ?? line?.isOverwritten
 
         const timestamps = [createdAt, isOverwritten].filter(Boolean).map(ts => {
             if (typeof ts === 'string') {
-                const date = new Date(ts);
-                return isNaN(date.getTime()) ? null : date.getTime();
+                const date = new Date(ts)
+                return isNaN(date.getTime()) ? null : date.getTime()
             }
-            if (typeof ts === 'number') return ts;
-            return null;
-        }).filter(t => t !== null);
+            if (typeof ts === 'number') return ts
+            return null
+        }).filter(t => t !== null)
 
-        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0
+    }
+
+    /**
+     * Extract timestamp from a line object using RERUM heuristics
+     * @param {Object} line - The line object
+     * @returns {Number} Timestamp in milliseconds
+     */
+    getTimestamp(line) {
+        const createdAt = line?.__rerum?.createdAt ?? line?.createdAt ?? line?.modified ?? line?.created ?? line?.timestamp
+        const isOverwritten = line?.__rerum?.isOverwritten ?? line?.isOverwritten
+        
+        const timestamps = [createdAt, isOverwritten].filter(Boolean).map(ts => {
+            if (typeof ts === 'string') {
+                const date = new Date(ts)
+                return isNaN(date.getTime()) ? null : date.getTime()
+            }
+            if (typeof ts === 'number') return ts
+            return null
+        }).filter(t => t !== null)
+        
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0
     }
 
     /**
@@ -138,24 +185,24 @@ class TPENLineHistory extends HTMLElement {
         if (line.body) {
             // If body is an object with value property (IIIF TextualBody)
             if (typeof line.body === 'object' && line.body.value) {
-                return line.body.value;
+                return line.body.value
             }
             // If body is an array, look for TextualBody with value
             if (Array.isArray(line.body)) {
                 for (const bodyItem of line.body) {
-                    if (bodyItem && typeof bodyItem === 'object' && bodyItem.value) {
-                        return bodyItem.value;
+                    if (bodyItem?.value) {
+                        return bodyItem.value
                     }
                 }
             }
             // If body is a string
             if (typeof line.body === 'string') {
-                return line.body;
+                return line.body
             }
         }
 
         // Support various other text property names
-        return line.text || line.content || line['cnt:chars'] || line.value || '';
+        return line.text ?? line.content ?? line['cnt:chars'] ?? line.value ?? ''
     }
 
     /**
@@ -165,21 +212,21 @@ class TPENLineHistory extends HTMLElement {
      */
     getLineBounding(line) {
         // Support various bounding property structures
-        const target = line.target || line.on;
-        if (target) {
+        const target = line.target ?? line.on
+        if (target?.selector?.value) {
             // Handle IIIF selector format
             if (target.selector) {
-                const selector = target.selector;
+                const selector = target.selector
                 if (selector.value) {
                     // xywh format: xywh=pixel:x,y,w,h or xywh=x,y,w,h
-                    const match = selector.value.match(/xywh=(?:pixel:)?(\d+),(\d+),(\d+),(\d+)/);
+                    const match = selector.value.match(/xywh=(?:pixel:)?(\d+),(\d+),(\d+),(\d+)/)
                     if (match) {
                         return {
                             x: parseInt(match[1]),
                             y: parseInt(match[2]),
                             width: parseInt(match[3]),
                             height: parseInt(match[4])
-                        };
+                        }
                     }
                 }
             }
@@ -192,12 +239,12 @@ class TPENLineHistory extends HTMLElement {
             return {
                 x: line.x,
                 y: line.y,
-                width: line.width !== undefined ? line.width : line.w,
-                height: line.height !== undefined ? line.height : line.h
-            };
+                width: line.width ?? line.w,
+                height: line.height ?? line.h
+            }
         }
 
-        return null;
+        return null
     }
 
     /**
@@ -206,20 +253,18 @@ class TPENLineHistory extends HTMLElement {
      * @returns {String|null} The image source URL
      */
     getLineImageSource(line) {
-        const target = line.target || line.on;
-        if (target) {
+        const target = line.target ?? line.on
+        if (target?.source) {
             // Handle IIIF target format
-            if (target.source) {
-                return target.source;
-            }
-            // Handle direct target URL
-            if (typeof target === 'string') {
-                return target;
-            }
+            return target.source
+        }
+        // Handle direct target URL
+        if (typeof target === 'string') {
+            return target
         }
 
         // Check for direct image properties
-        return line.image || line.src || line.source || null;
+        return line.image ?? line.src ?? line.source ?? null
     }
 
     /**
@@ -228,28 +273,84 @@ class TPENLineHistory extends HTMLElement {
      */
     getIIIFContext() {
         // Get manifest from TPEN.activeProject
-        let manifest = null;
+        let manifest = null
         if (TPEN?.activeProject?.manifest) {
+            const {manifest: projectManifest} = TPEN.activeProject
             // Handle both string URL and array of URLs
-            if (typeof TPEN.activeProject.manifest === 'string') {
-                manifest = TPEN.activeProject.manifest;
-            } else if (Array.isArray(TPEN.activeProject.manifest) && TPEN.activeProject.manifest[0]) {
-                manifest = TPEN.activeProject.manifest[0];
+            if (typeof projectManifest === 'string') {
+                manifest = projectManifest
+            } else if (Array.isArray(projectManifest) && projectManifest[0]) {
+                manifest = projectManifest[0]
             }
-        } else if (this.closest('[iiif-manifest]')) {
-            manifest = this.closest('[iiif-manifest]').getAttribute('iiif-manifest');
+        } else {
+            const manifestElement = this.closest('[iiif-manifest]')
+            if (manifestElement) {
+                manifest = manifestElement.getAttribute('iiif-manifest')
+            }
         }
 
         // Get canvas from current line target (annotation page canvas)
-        let canvas = null;
+        let canvas = null
         if (this.currentLine) {
-            const target = this.currentLine.target || this.currentLine.on;
-            if (target && target.source) {
-                canvas = target.source;
+            const target = this.currentLine.target ?? this.currentLine.on
+            if (target?.source) {
+                canvas = target.source
             }
         }
 
-        return { manifest, canvas };
+        return { manifest, canvas }
+    }
+
+    /**
+     * Extract image source from a line object
+     * @param {Object} line - The line object
+     * @returns {String|null} The image source URL
+     */
+    getLineImageSource(line) {
+        const target = line.target || line.on
+        if (target) {
+            // Handle IIIF target format
+            if (target.source) {
+                return target.source
+            }
+            // Handle direct target URL
+            if (typeof target === 'string') {
+                return target
+            }
+        }
+
+        // Check for direct image properties
+        return line.image || line.src || line.source || null
+    }
+
+    /**
+     * Extract IIIF manifest and canvas information from TPEN project and current line
+     * @returns {Object} Object with manifest and canvas URLs
+     */
+    getIIIFContext() {
+        // Get manifest from TPEN.activeProject
+        let manifest = null
+        if (TPEN?.activeProject?.manifest) {
+            // Handle both string URL and array of URLs
+            if (typeof TPEN.activeProject.manifest === 'string') {
+                manifest = TPEN.activeProject.manifest
+            } else if (Array.isArray(TPEN.activeProject.manifest) && TPEN.activeProject.manifest[0]) {
+                manifest = TPEN.activeProject.manifest[0]
+            }
+        } else if (this.closest('[iiif-manifest]')) {
+            manifest = this.closest('[iiif-manifest]').getAttribute('iiif-manifest')
+        }
+
+        // Get canvas from current line target (annotation page canvas)
+        let canvas = null
+        if (this.currentLine) {
+            const target = this.currentLine.target || this.currentLine.on
+            if (target && target.source) {
+                canvas = target.source
+            }
+        }
+
+        return { manifest, canvas }
     }
 
     /**
@@ -258,9 +359,9 @@ class TPENLineHistory extends HTMLElement {
      * @returns {String} Formatted date string
      */
     formatTimestamp(timestamp) {
-        if (!timestamp) return 'Unknown date';
-        const date = new Date(timestamp);
-        return date.toLocaleString();
+        if (!timestamp) return 'Unknown date'
+        const date = new Date(timestamp)
+        return date.toLocaleString()
     }
 
     /**
@@ -269,18 +370,38 @@ class TPENLineHistory extends HTMLElement {
      * @returns {String} Time ago string
      */
     formatTimeAgo(timestamp) {
-        if (!timestamp) return '';
+        if (!timestamp) return ''
 
-        const now = Date.now();
-        const diff = now - timestamp;
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(diff / 3600000);
-        const days = Math.floor(diff / 86400000);
+        const now = Date.now()
+        const diff = now - timestamp
+        const minutes = Math.floor(diff / 60000)
+        const hours = Math.floor(diff / 3600000)
+        const days = Math.floor(diff / 86400000)
 
-        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-        return 'just now';
+        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+        return 'just now'
+    }
+
+    /**
+     * Format time ago string like RerumHistoryTree
+     * @param {Number} timestamp - Timestamp in milliseconds
+     * @returns {String} Time ago string
+     */
+    formatTimeAgo(timestamp) {
+        if (!timestamp) return ''
+
+        const now = Date.now()
+        const diff = now - timestamp
+        const minutes = Math.floor(diff / 60000)
+        const hours = Math.floor(diff / 3600000)
+        const days = Math.floor(diff / 86400000)
+
+        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+        return 'just now'
     }
 
     /**
@@ -290,10 +411,10 @@ class TPENLineHistory extends HTMLElement {
      * @returns {Boolean} True if boxes are different
      */
     boundingChanged(box1, box2) {
-        if (!box1 && !box2) return false;
-        if (!box1 || !box2) return true;
+        if (!box1 && !box2) return false
+        if (!box1 || !box2) return true
         return box1.x !== box2.x || box1.y !== box2.y ||
-            box1.width !== box2.width || box1.height !== box2.height;
+            box1.width !== box2.width || box1.height !== box2.height
     }
 
     /**
@@ -455,34 +576,33 @@ class TPENLineHistory extends HTMLElement {
                 font-size: 0.75rem;
                 font-weight: bold;
             }
-        `;
+        `
 
-        let content = '';
-
+        let content = ''
         if (!this.currentLine || this.historyData.length === 0) {
-            content = `<div class="no-line">Select a line to view its history</div>`;
+            content = `<div class="no-line">Select a line to view its history</div>`
         } else {
             // Get IIIF context for the container
-            const iiifContext = this.getIIIFContext();
+            const iiifContext = this.getIIIFContext()
 
             const historyItems = this.historyData.map((item, index) => {
-                const text = this.getLineText(item);
-                const bounding = this.getLineBounding(item);
-                const timestamp = this.getTimestamp(item);
-                const isLatest = index === 0;
+                const text = this.getLineText(item)
+                const bounding = this.getLineBounding(item)
+                const timestamp = this.getTimestamp(item)
+                const isLatest = index === 0
 
                 // Check if bounding changed from previous version
                 const prevBounding = index < this.historyData.length - 1
                     ? this.getLineBounding(this.historyData[index + 1])
-                    : null;
-                const boundingChanged = this.boundingChanged(bounding, prevBounding);
+                    : null
+                const boundingChanged = this.boundingChanged(bounding, prevBounding)
 
                 // Get version ID for better identification
-                const versionId = item['@id'] || item.id || item._id || `version-${index}`;
-                const shortId = versionId.includes('/') ? versionId.split('/').pop() : versionId;
-                const lineId = item['@id'] || item.id || item._id;
+                const versionId = item['@id'] ?? item.id ?? item._id ?? `version-${index}`
+                const shortId = versionId.includes('/') ? versionId.split('/').pop() : versionId
+                const lineId = item['@id'] ?? item.id ?? item._id
 
-                let boundingHtml = '';
+                let boundingHtml = ''
                 if (bounding) {
                     boundingHtml = `
                         <div class="bounding-info">
@@ -494,16 +614,16 @@ class TPENLineHistory extends HTMLElement {
                                 x: ${bounding.x}, y: ${bounding.y}, width: ${bounding.width}, height: ${bounding.height}
                             </div>
                         </div>
-                    `;
+                    `
                 }
 
                 // Generate line image HTML
-                let imageHtml = '';
+                let imageHtml = ''
                 if (lineId && (iiifContext.manifest || iiifContext.canvas)) {
                     // Create region attribute from bounding coordinates
-                    let regionAttr = '';
+                    let regionAttr = ''
                     if (bounding) {
-                        regionAttr = `region="${bounding.x},${bounding.y},${bounding.width},${bounding.height}"`;
+                        regionAttr = `region="${bounding.x},${bounding.y},${bounding.width},${bounding.height}"`
                     }
                     
                     imageHtml = `
@@ -515,21 +635,21 @@ class TPENLineHistory extends HTMLElement {
                                 class="line-image">
                             </tpen-line-image>
                         </div>
-                    `;
+                    `
                 } else if (lineId) {
                     imageHtml = `
                         <div class="line-image-container">
                             <div class="line-image-title">Line Image Preview</div>
                             <div class="no-image">Missing IIIF context (manifest/canvas)</div>
                         </div>
-                    `;
+                    `
                 } else if (bounding) {
                     imageHtml = `
                         <div class="line-image-container">
                             <div class="line-image-title">Line Image Preview</div>
                             <div class="no-image">Missing line ID for TPEN image component</div>
                         </div>
-                    `;
+                    `
                 }
 
                 return `
@@ -539,12 +659,12 @@ class TPENLineHistory extends HTMLElement {
                             <span class="version-id" title="${versionId}">(${shortId})</span>
                             <span class="timestamp" title="${this.formatTimeAgo(timestamp)}">${this.formatTimestamp(timestamp)}</span>
                         </div>
-                        <div class="history-text ${text ? '' : 'empty'}">${text || '(empty)'}</div>
+                        <div class="history-text ${text ? '' : 'empty'}">${text ?? '(empty)'}</div>
                         ${boundingHtml}
                         ${imageHtml}
                     </li>
-                `;
-            }).join('');
+                `
+            }).join('')
 
             content = `
                 <div class="history-header">
@@ -555,7 +675,7 @@ class TPENLineHistory extends HTMLElement {
                     ${iiifContext.canvas ? `iiif-canvas="${iiifContext.canvas}"` : ''}>
                     ${historyItems}
                 </ul>
-            `;
+            `
         }
 
         this.shadowRoot.innerHTML = `
@@ -563,11 +683,11 @@ class TPENLineHistory extends HTMLElement {
             <div class="history-container">
                 ${content}
             </div>
-        `;
+        `
     }
 }
 
 // Register the custom element
-customElements.define('tpen-line-history', TPENLineHistory);
+customElements.define('tpen-line-history', TPENLineHistory)
 
-export default TPENLineHistory;
+export default TPENLineHistory
