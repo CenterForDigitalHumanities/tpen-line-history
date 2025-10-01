@@ -326,8 +326,9 @@
         })
 
         // Auto-select first line
-        if (lineList.firstChild) {
-            lineList.firstChild.click()
+        const firstLine = lineList.querySelector('.line-item')
+        if (firstLine) {
+            firstLine.click()
         }
     </script>
 </body>
