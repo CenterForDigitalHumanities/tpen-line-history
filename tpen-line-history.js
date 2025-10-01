@@ -15,15 +15,15 @@
  */
 class TPENLineHistory extends HTMLElement {
     constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
-        this.currentLine = null;
-        this.historyData = [];
+        super()
+        this.attachShadow({ mode: 'open' })
+        this.currentLine = null
+        this.historyData = []
     }
 
     connectedCallback() {
-        this.render();
-        this.setupEventListeners();
+        this.render()
+        this.setupEventListeners()
     }
 
     /**
@@ -31,22 +31,22 @@ class TPENLineHistory extends HTMLElement {
      */
     setupEventListeners() {
         // Listen for active line changes from TPEN.eventdispatcher
-        if (window.TPEN && window.TPEN.eventdispatcher) {
-            window.TPEN.eventdispatcher.addEventListener('line-selected', (event) => {
-                this.handleLineChange(event.detail);
-            });
-
-            window.TPEN.eventdispatcher.addEventListener('line-updated', (event) => {
-                this.handleLineUpdate(event.detail);
-            });
+        const dispatcher = window.TPEN?.eventdispatcher
+        if (!dispatcher) {
+            console.warn('TPEN.eventdispatcher not found. Line history will not update automatically.')
         } else {
-            console.warn('TPEN.eventdispatcher not found. Line history will not update automatically.');
+            dispatcher.addEventListener('line-selected', (event) => {
+                this.handleLineChange(event.detail)
+            })
+            dispatcher.addEventListener('line-updated', (event) => {
+                this.handleLineUpdate(event.detail)
+            })
         }
 
         // Also listen for custom events dispatched directly to this element
         this.addEventListener('update-line', (event) => {
-            this.handleLineChange(event.detail);
-        });
+            this.handleLineChange(event.detail)
+        })
     }
 
     /**
@@ -54,13 +54,13 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data from the event
      */
     async handleLineChange(lineData) {
-        if (!lineData) return;
+        if (!lineData) return
         
-        this.currentLine = lineData;
+        this.currentLine = lineData
         
         // Fetch history for this line
-        await this.fetchLineHistory(lineData);
-        this.render();
+        await this.fetchLineHistory(lineData)
+        this.render()
     }
 
     /**
@@ -68,10 +68,10 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The updated line data
      */
     handleLineUpdate(lineData) {
-        if (!lineData) return;
+        if (!lineData) return
         
         // Add the update to history and re-render
-        this.handleLineChange(lineData);
+        this.handleLineChange(lineData)
     }
 
     /**
@@ -79,25 +79,27 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data object
      */
     async fetchLineHistory(lineData) {
+        const uri = lineData.uri ?? lineData['@id']
+        
+        // No URI, just show current state
+        if (!uri) {
+            this.historyData = [lineData]
+            return
+        }
+
         // If the line has a URI, fetch its history
-        if (lineData.uri || lineData['@id']) {
-            const uri = lineData.uri || lineData['@id'];
-            try {
-                const response = await fetch(`${uri}/history`);
-                if (response.ok) {
-                    const history = await response.json();
-                    this.historyData = Array.isArray(history) ? history : [history];
-                } else {
-                    // If history endpoint doesn't exist, use the current line as history
-                    this.historyData = [lineData];
-                }
-            } catch (error) {
-                console.warn('Could not fetch line history:', error);
-                this.historyData = [lineData];
+        try {
+            const response = await fetch(`${uri}/history`)
+            if (response.ok) {
+                const history = await response.json()
+                this.historyData = Array.isArray(history) ? history : [history]
+                return
             }
-        } else {
-            // No URI, just show current state
-            this.historyData = [lineData];
+            // If history endpoint doesn't exist, use the current line as history
+            this.historyData = [lineData]
+        } catch (error) {
+            console.warn('Could not fetch line history:', error)
+            this.historyData = [lineData]
         }
     }
 
@@ -108,7 +110,7 @@ class TPENLineHistory extends HTMLElement {
      */
     getLineText(line) {
         // Support various text property names
-        return line.text || line.content || line['cnt:chars'] || line.body || line.value || '';
+        return line.text ?? line.content ?? line['cnt:chars'] ?? line.body ?? line.value ?? ''
     }
 
     /**
@@ -118,22 +120,17 @@ class TPENLineHistory extends HTMLElement {
      */
     getLineBounding(line) {
         // Support various bounding property structures
-        const target = line.target || line.on;
-        if (target) {
+        const target = line.target ?? line.on
+        if (target?.selector?.value) {
             // Handle IIIF selector format
-            if (target.selector) {
-                const selector = target.selector;
-                if (selector.value) {
-                    // xywh format: xywh=x,y,w,h
-                    const match = selector.value.match(/xywh=(\d+),(\d+),(\d+),(\d+)/);
-                    if (match) {
-                        return {
-                            x: parseInt(match[1]),
-                            y: parseInt(match[2]),
-                            width: parseInt(match[3]),
-                            height: parseInt(match[4])
-                        };
-                    }
+            // xywh format: xywh=x,y,w,h
+            const match = target.selector.value.match(/xywh=(\d+),(\d+),(\d+),(\d+)/)
+            if (match) {
+                return {
+                    x: parseInt(match[1]),
+                    y: parseInt(match[2]),
+                    width: parseInt(match[3]),
+                    height: parseInt(match[4])
                 }
             }
         }
@@ -145,12 +142,12 @@ class TPENLineHistory extends HTMLElement {
             return {
                 x: line.x,
                 y: line.y,
-                width: line.width !== undefined ? line.width : line.w,
-                height: line.height !== undefined ? line.height : line.h
-            };
+                width: line.width ?? line.w,
+                height: line.height ?? line.h
+            }
         }
 
-        return null;
+        return null
     }
 
     /**
@@ -159,9 +156,9 @@ class TPENLineHistory extends HTMLElement {
      * @returns {String} Formatted date string
      */
     formatTimestamp(timestamp) {
-        if (!timestamp) return 'Unknown date';
-        const date = new Date(timestamp);
-        return date.toLocaleString();
+        if (!timestamp) return 'Unknown date'
+        const date = new Date(timestamp)
+        return date.toLocaleString()
     }
 
     /**
@@ -171,10 +168,10 @@ class TPENLineHistory extends HTMLElement {
      * @returns {Boolean} True if boxes are different
      */
     boundingChanged(box1, box2) {
-        if (!box1 && !box2) return false;
-        if (!box1 || !box2) return true;
+        if (!box1 && !box2) return false
+        if (!box1 || !box2) return true
         return box1.x !== box2.x || box1.y !== box2.y || 
-               box1.width !== box2.width || box1.height !== box2.height;
+               box1.width !== box2.width || box1.height !== box2.height
     }
 
     /**
@@ -297,26 +294,26 @@ class TPENLineHistory extends HTMLElement {
                 font-size: 0.75rem;
                 font-weight: bold;
             }
-        `;
+        `
 
-        let content = '';
+        let content = ''
         
         if (!this.currentLine || this.historyData.length === 0) {
-            content = `<div class="no-line">Select a line to view its history</div>`;
+            content = `<div class="no-line">Select a line to view its history</div>`
         } else {
             const historyItems = this.historyData.map((item, index) => {
-                const text = this.getLineText(item);
-                const bounding = this.getLineBounding(item);
-                const timestamp = item.modified || item.created || item['__created'] || item.timestamp;
-                const isLatest = index === 0;
+                const text = this.getLineText(item)
+                const bounding = this.getLineBounding(item)
+                const timestamp = item.modified ?? item.created ?? item['__created'] ?? item.timestamp
+                const isLatest = index === 0
                 
                 // Check if bounding changed from previous version
                 const prevBounding = index < this.historyData.length - 1 
                     ? this.getLineBounding(this.historyData[index + 1]) 
-                    : null;
-                const boundingChanged = this.boundingChanged(bounding, prevBounding);
+                    : null
+                const boundingChanged = this.boundingChanged(bounding, prevBounding)
 
-                let boundingHtml = '';
+                let boundingHtml = ''
                 if (bounding) {
                     boundingHtml = `
                         <div class="bounding-info">
@@ -328,7 +325,7 @@ class TPENLineHistory extends HTMLElement {
                                 x: ${bounding.x}, y: ${bounding.y}, width: ${bounding.width}, height: ${bounding.height}
                             </div>
                         </div>
-                    `;
+                    `
                 }
 
                 return `
@@ -338,12 +335,12 @@ class TPENLineHistory extends HTMLElement {
                             <span class="timestamp">${this.formatTimestamp(timestamp)}</span>
                         </div>
                         <div class="history-text ${text ? '' : 'empty'}">
-                            ${text || '(empty)'}
+                            ${text ?? '(empty)'}
                         </div>
                         ${boundingHtml}
                     </li>
-                `;
-            }).join('');
+                `
+            }).join('')
 
             content = `
                 <div class="history-header">
@@ -352,7 +349,7 @@ class TPENLineHistory extends HTMLElement {
                 <ul class="history-list">
                     ${historyItems}
                 </ul>
-            `;
+            `
         }
 
         this.shadowRoot.innerHTML = `
@@ -360,7 +357,7 @@ class TPENLineHistory extends HTMLElement {
             <div class="history-container">
                 ${content}
             </div>
-        `;
+        `
     }
 
     /**
@@ -368,11 +365,11 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data to display
      */
     updateLine(lineData) {
-        this.handleLineChange(lineData);
+        this.handleLineChange(lineData)
     }
 }
 
 // Register the custom element
-customElements.define('tpen-line-history', TPENLineHistory);
+customElements.define('tpen-line-history', TPENLineHistory)
 
-export default TPENLineHistory;
+export default TPENLineHistory

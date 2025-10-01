@@ -153,12 +153,12 @@
     </div>
 
     <script type="module">
-        import './tpen-line-history.js';
+        import './tpen-line-history.js'
 
         // Mock TPEN.eventdispatcher for demo purposes
         window.TPEN = {
             eventdispatcher: new EventTarget()
-        };
+        }
 
         // Sample line data with history
         const sampleLines = [
@@ -270,64 +270,64 @@
                     }
                 ]
             }
-        ];
+        ]
 
-        const lineList = document.getElementById('lineList');
-        const historyComponent = document.getElementById('historyComponent');
-        let selectedLineElement = null;
+        const lineList = document.getElementById('lineList')
+        const historyComponent = document.getElementById('historyComponent')
+        let selectedLineElement = null
 
         // Render sample lines
         sampleLines.forEach(line => {
-            const li = document.createElement('li');
-            li.className = 'line-item';
+            const li = document.createElement('li')
+            li.className = 'line-item'
             li.innerHTML = `
                 <div><strong>Line ${line['@id']}</strong></div>
-                <div class="line-text">${line.text || '(empty)'}</div>
-            `;
+                <div class="line-text">${line.text ?? '(empty)'}</div>
+            `
             
             li.addEventListener('click', () => {
                 // Remove active class from previously selected line
                 if (selectedLineElement) {
-                    selectedLineElement.classList.remove('active');
+                    selectedLineElement.classList.remove('active')
                 }
                 
                 // Add active class to clicked line
-                li.classList.add('active');
-                selectedLineElement = li;
+                li.classList.add('active')
+                selectedLineElement = li
 
                 // Simulate fetching history by using our mock data
-                const lineWithHistory = { ...line };
+                const lineWithHistory = { ...line }
                 
                 // Mock the fetch response
-                const originalFetch = window.fetch;
+                const originalFetch = window.fetch
                 window.fetch = async (url) => {
                     if (url.endsWith('/history')) {
                         return {
                             ok: true,
-                            json: async () => line.history || [line]
-                        };
+                            json: async () => line.history ?? [line]
+                        }
                     }
-                    return originalFetch(url);
-                };
+                    return originalFetch(url)
+                }
 
                 // Update the history component
-                historyComponent.updateLine(lineWithHistory);
+                historyComponent.updateLine(lineWithHistory)
 
                 // Restore original fetch
-                window.fetch = originalFetch;
+                window.fetch = originalFetch
 
                 // Also dispatch event to TPEN.eventdispatcher
                 window.TPEN.eventdispatcher.dispatchEvent(
                     new CustomEvent('line-selected', { detail: lineWithHistory })
-                );
-            });
+                )
+            })
 
-            lineList.appendChild(li);
-        });
+            lineList.appendChild(li)
+        })
 
         // Auto-select first line
         if (lineList.firstChild) {
-            lineList.firstChild.click();
+            lineList.firstChild.click()
         }
     </script>
 </body>
