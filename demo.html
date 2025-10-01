@@ -100,6 +100,24 @@
             color: #333;
         }
 
+        .line-meta {
+            margin-top: 0.25rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .line-uri {
+            margin-top: 0.25rem;
+        }
+
+        .line-uri code {
+            background: #f0f0f0;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
         .info {
             padding: 1rem;
             background: #e3f2fd;
@@ -134,12 +152,13 @@
             
             <div class="info">
                 <h3>About this component</h3>
-                <p>This component displays the history of transcription lines from TPEN projects. Click on a line below to see its history in the right pane. The history includes previous versions of the text and any changes to image boundings.</p>
+                <p>This component displays the history of transcription lines from TPEN projects. The demo loads real annotation data from a RERUM annotation page and shows how the history component works with actual TPEN line data. Click on a line below to see its history in the right pane.</p>
+                <p><strong>Data source:</strong> <code>https://devstore.rerum.io/v1/id/68d4490c73ed8d0e76715dc3</code></p>
             </div>
 
             <div class="controls">
-                <h2>Sample Lines</h2>
-                <p>Click on a line to view its history:</p>
+                <h2>Annotation Lines</h2>
+                <p>Real annotation data from RERUM annotation page. Click on a line to view its history using RerumHistoryData:</p>
             </div>
 
             <ul class="line-list" id="lineList">
@@ -148,187 +167,182 @@
         </div>
 
         <div class="history-pane">
-            <tpen-line-history id="historyComponent"></tpen-line-history>
+            <tpen-line-history id="historyComponent" iiif-manifest="https://tpen-project-examples.habesoftware.app/Bzommar_pretty_pictures/manifest.json"></tpen-line-history>
         </div>
     </div>
 
     <script type="module">
         import './tpen-line-history.js';
+        import TPEN from 'http://app.t-pen.org/api/TPEN.js'
 
-        // Mock TPEN.eventdispatcher for demo purposes
-        window.TPEN = {
-            eventdispatcher: new EventTarget()
-        };
-
-        // Sample line data with history
-        const sampleLines = [
-            {
-                '@id': 'line1',
-                uri: 'line1',
-                text: 'The quick brown fox jumps over the lazy dog.',
-                x: 100,
-                y: 150,
-                width: 800,
-                height: 50,
-                modified: new Date('2025-01-15T10:30:00Z').toISOString(),
-                history: [
-                    {
-                        text: 'The quick brown fox jumps over the lazy dog.',
-                        x: 100,
-                        y: 150,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-15T10:30:00Z').toISOString()
-                    },
-                    {
-                        text: 'The quick brown fox jumps over the lazy dog',
-                        x: 100,
-                        y: 150,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-15T09:15:00Z').toISOString()
-                    },
-                    {
-                        text: 'The quick brown fox',
-                        x: 95,
-                        y: 145,
-                        width: 750,
-                        height: 48,
-                        modified: new Date('2025-01-14T16:45:00Z').toISOString()
+        // Fetch real annotation data from the RERUM annotation page
+        async function loadAnnotationData() {
+            try {
+                const response = await fetch('https://devstore.rerum.io/v1/id/68d4490c73ed8d0e76715dc3');
+                const annotationPage = await response.json();
+                
+                console.log('Loaded annotation page:', annotationPage);
+                
+                // Extract annotation items and convert to line format
+                const annotations = annotationPage.items || [];
+                const lines = [];
+                
+                for (let i = 0; i < annotations.length; i++) {
+                    const annotation = annotations[i];
+                    
+                    // Extract coordinates from selector value (xywh=pixel:x,y,w,h)
+                    let coordinates = { x: 0, y: 0, width: 100, height: 50 };
+                    if (annotation.target?.selector?.value) {
+                        const match = annotation.target.selector.value.match(/xywh=pixel:(\d+),(\d+),(\d+),(\d+)/);
+                        if (match) {
+                            coordinates = {
+                                x: parseInt(match[1]),
+                                y: parseInt(match[2]),
+                                width: parseInt(match[3]),
+                                height: parseInt(match[4])
+                            };
+                        }
                     }
-                ]
-            },
-            {
-                '@id': 'line2',
-                uri: 'line2',
-                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                x: 100,
-                y: 220,
-                width: 800,
-                height: 50,
-                modified: new Date('2025-01-16T14:20:00Z').toISOString(),
-                history: [
-                    {
-                        text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                        x: 100,
-                        y: 220,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-16T14:20:00Z').toISOString()
-                    },
-                    {
-                        text: 'Lorem ipsum dolor sit amet',
-                        x: 100,
-                        y: 220,
-                        width: 600,
-                        height: 50,
-                        modified: new Date('2025-01-16T11:00:00Z').toISOString()
+                    
+                    // Extract text from annotation body
+                    let text = '';
+                    if (annotation.body) {
+                        // If body is an object with value property (IIIF TextualBody)
+                        if (typeof annotation.body === 'object' && annotation.body.value) {
+                            text = annotation.body.value;
+                        }
+                        // If body is an array, look for TextualBody with value
+                        else if (Array.isArray(annotation.body)) {
+                            for (const bodyItem of annotation.body) {
+                                if (bodyItem && typeof bodyItem === 'object' && bodyItem.value) {
+                                    text = bodyItem.value;
+                                    break;
+                                }
+                            }
+                        }
+                        // If body is a string
+                        else if (typeof annotation.body === 'string') {
+                            text = annotation.body;
+                        }
                     }
-                ]
-            },
-            {
-                '@id': 'line3',
-                uri: 'line3',
-                text: 'Sed ut perspiciatis unde omnis iste natus error.',
-                x: 100,
-                y: 290,
-                width: 800,
-                height: 50,
-                modified: new Date('2025-01-17T08:00:00Z').toISOString(),
-                history: [
-                    {
-                        text: 'Sed ut perspiciatis unde omnis iste natus error.',
-                        x: 100,
-                        y: 290,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-17T08:00:00Z').toISOString()
-                    },
-                    {
-                        text: 'Sed ut perspiciatis unde omnis iste natus error',
-                        x: 100,
-                        y: 290,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-16T22:30:00Z').toISOString()
-                    },
-                    {
-                        text: 'Sed ut perspiciatis',
-                        x: 98,
-                        y: 288,
-                        width: 400,
-                        height: 48,
-                        modified: new Date('2025-01-16T20:00:00Z').toISOString()
-                    },
-                    {
-                        text: '',
-                        x: 100,
-                        y: 290,
-                        width: 800,
-                        height: 50,
-                        modified: new Date('2025-01-16T19:00:00Z').toISOString()
+                    
+                    // Fallback to placeholder if no text found
+                    if (!text) {
+                        text = `Line ${i + 1} (${coordinates.x}, ${coordinates.y})`;
                     }
-                ]
-            }
-        ];
-
-        const lineList = document.getElementById('lineList');
-        const historyComponent = document.getElementById('historyComponent');
-        let selectedLineElement = null;
-
-        // Render sample lines
-        sampleLines.forEach(line => {
-            const li = document.createElement('li');
-            li.className = 'line-item';
-            li.innerHTML = `
-                <div><strong>Line ${line['@id']}</strong></div>
-                <div class="line-text">${line.text || '(empty)'}</div>
-            `;
-            
-            li.addEventListener('click', () => {
-                // Remove active class from previously selected line
-                if (selectedLineElement) {
-                    selectedLineElement.classList.remove('active');
+                    
+                    // Create line object
+                    const line = {
+                        '@id': annotation.id,
+                        uri: annotation.id,
+                        text: text,
+                        target: annotation.target,
+                        body: annotation.body, // Preserve original body for history component
+                        ...coordinates,
+                        modified: annotationPage._modifiedAt || new Date().toISOString(),
+                        created: annotationPage._createdAt || new Date().toISOString(),
+                        // Add RERUM metadata for history tracking
+                        __rerum: {
+                            history: {
+                                prime: 'root'
+                            },
+                            createdAt: annotationPage._createdAt,
+                            isOverwritten: annotationPage._modifiedAt
+                        }
+                    };
+                    
+                    lines.push(line);
                 }
                 
-                // Add active class to clicked line
-                li.classList.add('active');
-                selectedLineElement = li;
-
-                // Simulate fetching history by using our mock data
-                const lineWithHistory = { ...line };
+                console.log('Converted lines:', lines);
+                renderLines(lines);
                 
-                // Mock the fetch response
-                const originalFetch = window.fetch;
-                window.fetch = async (url) => {
-                    if (url.endsWith('/history')) {
-                        return {
-                            ok: true,
-                            json: async () => line.history || [line]
-                        };
+            } catch (error) {
+                console.error('Error loading annotation data:', error);
+                // Fallback to sample data
+                renderLines(getSampleLines());
+            }
+        }
+
+        function getSampleLines() {
+            // Fallback sample data
+            return [
+                {
+                    '@id': 'https://example.com/line1',
+                    uri: 'https://example.com/line1',
+                    text: 'Sample Line 1 - Failed to load real data',
+                    x: 100,
+                    y: 150,
+                    width: 600,
+                    height: 50,
+                    modified: new Date('2025-01-15T10:30:00Z').toISOString()
+                },
+                {
+                    '@id': 'https://example.com/line2',
+                    uri: 'https://example.com/line2',
+                    text: 'Sample Line 2 - Failed to load real data',
+                    x: 100,
+                    y: 220,
+                    width: 600,
+                    height: 50,
+                    modified: new Date('2025-01-16T14:20:00Z').toISOString()
+                }
+            ];
+        }
+
+        function renderLines(lines) {
+            const lineList = document.getElementById('lineList');
+            const historyComponent = document.getElementById('historyComponent');
+            let selectedLineElement = null;
+
+            // Clear existing lines
+            lineList.innerHTML = '';
+
+            // Render lines
+            lines.forEach((line, index) => {
+                const li = document.createElement('li');
+                li.className = 'line-item';
+                li.innerHTML = `
+                    <div><strong>Line ${index + 1}</strong></div>
+                    <div class="line-text">${line.text || '(empty)'}</div>
+                    <div class="line-meta">
+                        <small>x: ${line.x}, y: ${line.y}, size: ${line.width}×${line.height}</small>
+                    </div>
+                    <div class="line-uri">
+                        <small><code>${line.uri ? line.uri.split('/').pop() : 'no-uri'}</code></small>
+                    </div>
+                `;
+                
+                li.addEventListener('click', async () => {
+                    // Remove active class from previously selected line
+                    if (selectedLineElement) {
+                        selectedLineElement.classList.remove('active');
                     }
-                    return originalFetch(url);
-                };
+                    
+                    // Add active class to clicked line
+                    li.classList.add('active');
+                    selectedLineElement = li;
 
-                // Update the history component
-                historyComponent.updateLine(lineWithHistory);
+                    // Update the history component with the real line data
+                    await historyComponent.handleLineChange(line);
 
-                // Restore original fetch
-                window.fetch = originalFetch;
+                    // Also dispatch event to TPEN.eventDispatcher
+                    TPEN.eventDispatcher.dispatchEvent(
+                        new CustomEvent('tpen-set-line', { detail: line })
+                    );
+                });
 
-                // Also dispatch event to TPEN.eventdispatcher
-                window.TPEN.eventdispatcher.dispatchEvent(
-                    new CustomEvent('line-selected', { detail: lineWithHistory })
-                );
+                lineList.appendChild(li);
             });
 
-            lineList.appendChild(li);
-        });
-
-        // Auto-select first line
-        if (lineList.firstChild) {
-            lineList.firstChild.click();
+            // Auto-select first line
+            if (lineList.firstChild) {
+                lineList.firstChild.click();
+            }
         }
+
+        // Load the annotation data when page loads
+        loadAnnotationData();
     </script>
 </body>
 </html>

@@ -1,14 +1,17 @@
 # tpen-line-history
 
-A custom web component that displays the history of transcription lines from TPEN (Text and Process Encoding Network) projects. This component extends the [rerum-history-component](https://cubap.github.io/rerum-history-component/) to provide a specialized view for tracking changes to transcription lines, including text modifications and image bounding adjustments.
+A custom web component that displays the history of transcription lines from TPEN (Text and Process Encoding Network) projects. This component integrates with the [rerum-history-component](https://cubap.github.io/rerum-history-component/) to provide robust history fetching and display for tracking changes to transcription lines, including text modifications and image bounding adjustments.
 
 ## Features
 
+- **RERUM History Integration**: Uses `RerumHistoryData` for robust history fetching from RERUM endpoints
 - **Line History Display**: Shows all historical versions of a transcription line in a vertical list
 - **Text Change Tracking**: Displays the evolution of transcription text over time
 - **Image Bounding Visualization**: Shows changes to the image coordinates and dimensions for each line version
 - **TPEN Integration**: Listens to TPEN.eventdispatcher for active line changes
 - **Split Screen Ready**: Designed to work in a split-screen layout as a tall rectangular panel
+- **Version Relationship Tracking**: Builds proper parent-child relationships between versions using RERUM heuristics
+- **Multiple Endpoint Support**: Automatically fetches from both `/history/` and `/since/` endpoints
 - **Responsive Design**: Adapts to different screen sizes
 
 ## Installation
@@ -49,14 +52,13 @@ The component automatically listens for events from `TPEN.eventdispatcher`:
 
 ```javascript
 // The component listens for these events:
-// - 'line-selected': When a user selects a line
-// - 'line-updated': When a line is modified
+// - 'tpen-set-line': When a user selects a line
 
 // Example: Trigger line selection
 window.TPEN.eventdispatcher.dispatchEvent(
-  new CustomEvent('line-selected', {
+  new CustomEvent('tpen-set-line', {
     detail: {
-      '@id': 'line-uri',
+      '@id': 'https://devstore.rerum.io/v1/id/...',
       text: 'Transcription text',
       x: 100,
       y: 150,
@@ -65,6 +67,46 @@ window.TPEN.eventdispatcher.dispatchEvent(
     }
   })
 );
+```
+
+### With RERUM Annotation Data
+
+The component works seamlessly with RERUM annotation pages. Here's how to load annotation data:
+
+```javascript
+async function loadAnnotationPage(annotationPageUri) {
+  const response = await fetch(annotationPageUri);
+  const annotationPage = await response.json();
+  
+  // Convert annotations to line format
+  const lines = annotationPage.items.map((annotation, index) => {
+    // Extract coordinates from selector value (xywh=pixel:x,y,w,h)
+    let coordinates = { x: 0, y: 0, width: 100, height: 50 };
+    if (annotation.target?.selector?.value) {
+      const match = annotation.target.selector.value.match(/xywh=pixel:(\\d+),(\\d+),(\\d+),(\\d+)/);
+      if (match) {
+        coordinates = {
+          x: parseInt(match[1]),
+          y: parseInt(match[2]),
+          width: parseInt(match[3]),
+          height: parseInt(match[4])
+        };
+      }
+    }
+    
+    return {
+      '@id': annotation.id,
+      uri: annotation.id,
+      text: `Line ${index + 1}`, // Or extract from annotation.body
+      ...coordinates
+    };
+  });
+  
+  return lines;
+}
+
+// Example usage with the demo annotation page
+const lines = await loadAnnotationPage('https://devstore.rerum.io/v1/id/68d4490c73ed8d0e76715dc3');
 ```
 
 ### Manual Updates
