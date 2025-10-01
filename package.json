@@ -5,7 +5,12 @@
   "main": "tpen-line-history.js",
   "type": "module",
   "scripts": {
-    "demo": "echo 'Open demo.html in your browser to see the component in action'"
+    "demo": "echo 'Open demo.html in your browser to see the component in action'",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
   },
   "repository": {
     "type": "git",

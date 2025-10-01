@@ -172,63 +172,63 @@
     </div>
 
     <script type="module">
-        import './tpen-line-history.js';
+        import './tpen-line-history.js'
         import TPEN from 'http://app.t-pen.org/api/TPEN.js'
 
         // Fetch real annotation data from the RERUM annotation page
         async function loadAnnotationData() {
             try {
-                const response = await fetch('https://devstore.rerum.io/v1/id/68d4490c73ed8d0e76715dc3');
-                const annotationPage = await response.json();
+                const response = await fetch('https://devstore.rerum.io/v1/id/68d4490c73ed8d0e76715dc3')
+                const annotationPage = await response.json()
                 
-                console.log('Loaded annotation page:', annotationPage);
+                console.log('Loaded annotation page:', annotationPage)
                 
                 // Extract annotation items and convert to line format
-                const annotations = annotationPage.items || [];
-                const lines = [];
+                const annotations = annotationPage.items || []
+                const lines = []
                 
                 for (let i = 0; i < annotations.length; i++) {
-                    const annotation = annotations[i];
+                    const annotation = annotations[i]
                     
                     // Extract coordinates from selector value (xywh=pixel:x,y,w,h)
-                    let coordinates = { x: 0, y: 0, width: 100, height: 50 };
+                    let coordinates = { x: 0, y: 0, width: 100, height: 50 }
                     if (annotation.target?.selector?.value) {
-                        const match = annotation.target.selector.value.match(/xywh=pixel:(\d+),(\d+),(\d+),(\d+)/);
+                        const match = annotation.target.selector.value.match(/xywh=pixel:(\d+),(\d+),(\d+),(\d+)/)
                         if (match) {
                             coordinates = {
                                 x: parseInt(match[1]),
                                 y: parseInt(match[2]),
                                 width: parseInt(match[3]),
                                 height: parseInt(match[4])
-                            };
+                            }
                         }
                     }
                     
                     // Extract text from annotation body
-                    let text = '';
+                    let text = ''
                     if (annotation.body) {
                         // If body is an object with value property (IIIF TextualBody)
                         if (typeof annotation.body === 'object' && annotation.body.value) {
-                            text = annotation.body.value;
+                            text = annotation.body.value
                         }
                         // If body is an array, look for TextualBody with value
                         else if (Array.isArray(annotation.body)) {
                             for (const bodyItem of annotation.body) {
                                 if (bodyItem && typeof bodyItem === 'object' && bodyItem.value) {
-                                    text = bodyItem.value;
-                                    break;
+                                    text = bodyItem.value
+                                    break
                                 }
                             }
                         }
                         // If body is a string
                         else if (typeof annotation.body === 'string') {
-                            text = annotation.body;
+                            text = annotation.body
                         }
                     }
                     
                     // Fallback to placeholder if no text found
                     if (!text) {
-                        text = `Line ${i + 1} (${coordinates.x}, ${coordinates.y})`;
+                        text = `Line ${i + 1} (${coordinates.x}, ${coordinates.y})`
                     }
                     
                     // Create line object
@@ -251,16 +251,16 @@
                         }
                     };
                     
-                    lines.push(line);
+                    lines.push(line)
                 }
                 
-                console.log('Converted lines:', lines);
-                renderLines(lines);
+                console.log('Converted lines:', lines)
+                renderLines(lines)
                 
             } catch (error) {
-                console.error('Error loading annotation data:', error);
+                console.error('Error loading annotation data:', error)
                 // Fallback to sample data
-                renderLines(getSampleLines());
+                renderLines(getSampleLines())
             }
         }
 
@@ -287,16 +287,16 @@
                     height: 50,
                     modified: new Date('2025-01-16T14:20:00Z').toISOString()
                 }
-            ];
+            ]
         }
 
         function renderLines(lines) {
-            const lineList = document.getElementById('lineList');
-            const historyComponent = document.getElementById('historyComponent');
-            let selectedLineElement = null;
+            const lineList = document.getElementById('lineList')
+            const historyComponent = document.getElementById('historyComponent')
+            let selectedLineElement = null
 
             // Clear existing lines
-            lineList.innerHTML = '';
+            lineList.innerHTML = ''
 
             // Render lines
             lines.forEach((line, index) => {
@@ -316,33 +316,33 @@
                 li.addEventListener('click', async () => {
                     // Remove active class from previously selected line
                     if (selectedLineElement) {
-                        selectedLineElement.classList.remove('active');
+                        selectedLineElement.classList.remove('active')
                     }
                     
                     // Add active class to clicked line
-                    li.classList.add('active');
-                    selectedLineElement = li;
+                    li.classList.add('active')
+                    selectedLineElement = li
 
                     // Update the history component with the real line data
-                    await historyComponent.handleLineChange(line);
+                    await historyComponent.handleLineChange(line)
 
                     // Also dispatch event to TPEN.eventDispatcher
                     TPEN.eventDispatcher.dispatchEvent(
                         new CustomEvent('tpen-set-line', { detail: line })
-                    );
-                });
+                    )
+                })
 
-                lineList.appendChild(li);
-            });
+                lineList.appendChild(li)
+            })
 
             // Auto-select first line
             if (lineList.firstChild) {
-                lineList.firstChild.click();
+                lineList.firstChild.click()
             }
         }
 
         // Load the annotation data when page loads
-        loadAnnotationData();
+        loadAnnotationData()
     </script>
 </body>
 </html>
