@@ -8,7 +8,7 @@
  * @license MIT
  */
 
-import TPEN from 'http://app.t-pen.org/api/TPEN.js'
+import TPEN from 'https://app.t-pen.org/api/TPEN.js'
 import 'https://app.t-pen.org/components/line-image/index.js'
 import { RerumHistoryData } from 'https://cubap.github.io/rerum-history-component/src/rerum-history-tree.js'
 
