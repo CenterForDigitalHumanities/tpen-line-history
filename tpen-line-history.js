@@ -71,9 +71,11 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data object
      */
     async fetchLineHistory(lineData) {
+        console.log('fetchLineHistory called with:', lineData)
         // If the line has a URI, fetch its history using RerumHistoryData
         if (lineData.uri || lineData['@id']) {
             const uri = lineData.uri || lineData['@id']
+            console.log('Using URI for history fetch:', uri)
             try {
                 // Clean up previous history data instance
                 if (this.rerumHistoryData) {
@@ -84,7 +86,9 @@ class TPENLineHistory extends HTMLElement {
                 await this.rerumHistoryData.fetch()
                 
                 this.historyData = this.rerumHistoryData.getItems()
-                this.historyGraph = this.rerumHistoryData.getGraph()                // Sort by timestamp (most recent first) if we don't have graph structure
+                this.historyGraph = this.rerumHistoryData.getGraph()
+                
+                // Sort by timestamp (most recent first) if we don't have graph structure
                 if (this.historyData.length > 0) {
                     this.historyData.sort((a, b) => {
                         const timestampA = this.getTimestamp(a)
@@ -99,35 +103,8 @@ class TPENLineHistory extends HTMLElement {
                 this.historyGraph = null
             }
         } else {
+            console.log('No URI found in line data, using fallback')
             // No URI, just show current state
-            this.historyData = [lineData]
-            this.historyGraph = null
-        }
-
-        // If the line has a URI, fetch its history using RerumHistoryData
-        try {
-            // Clean up previous history data instance
-            if (this.rerumHistoryData) {
-                this.rerumHistoryData.abort()
-            }
-
-            this.rerumHistoryData = new RerumHistoryData(uri)
-            await this.rerumHistoryData.fetch()
-
-            this.historyData = this.rerumHistoryData.getItems()
-            this.historyGraph = this.rerumHistoryData.getGraph()
-
-            // Sort by timestamp (most recent first) if we don't have graph structure
-            if (this.historyData.length > 0) {
-                this.historyData.sort((a, b) => {
-                    const timestampA = this.getTimestamp(a)
-                    const timestampB = this.getTimestamp(b)
-                    return timestampB - timestampA
-                })
-            }
-        } catch (error) {
-            console.warn('Could not fetch line history with RerumHistoryData:', error)
-            // Fallback to simple array with current line
             this.historyData = [lineData]
             this.historyGraph = null
         }
