@@ -8,8 +8,31 @@
  * @license MIT
  */
 
-import TPEN from 'https://app.t-pen.org/api/TPEN.js'
-import 'https://app.t-pen.org/components/line-image/index.js'
+// Attempt to use an existing global TPEN if present (other scripts may load it via relative URLs)
+let TPEN = (typeof window !== 'undefined' && window.TPEN) ? window.TPEN : null
+let _tpImportPromise = null
+if (!TPEN) {
+    // Kick off a dynamic import but don't block module evaluation. We'll wait for it when needed.
+    _tpImportPromise = (async () => {
+        try {
+            const mod = await import('https://app.t-pen.org/api/TPEN.js')
+            TPEN = mod.default ?? mod.TPEN ?? (typeof window !== 'undefined' ? window.TPEN : null)
+        } catch (e) {
+            console.warn('tpen-line-history: dynamic import of TPEN failed:', e)
+            TPEN = (typeof window !== 'undefined') ? window.TPEN ?? null : null
+        }
+        return TPEN
+    })()
+}
+
+// Only import the TPEN line-image component if its custom element isn't already registered
+if (typeof customElements !== 'undefined' && !customElements.get('tpen-line-image')) {
+    // Fire-and-forget dynamic import; component registers itself when loaded.
+    import('https://app.t-pen.org/components/line-image/index.js').catch(e => {
+        console.warn('tpen-line-history: failed to import tpen-line-image component:', e)
+    })
+}
+
 import { RerumHistoryData } from 'https://cubap.github.io/rerum-history-component/src/rerum-history-tree.js'
 
 /**
