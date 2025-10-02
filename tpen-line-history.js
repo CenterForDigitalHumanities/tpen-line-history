@@ -68,7 +68,7 @@ class TPENLineHistory extends HTMLElement {
      */
     setupEventListeners() {
         // Listen for active line changes from TPEN.eventDispatcher
-        TPEN.eventDispatcher.on('tpen-set-line', (event) => {
+        TPEN.eventDispatcher.on('tpen-active-line-updated', (event) => {
             this.handleLineChange(event.detail)
         })
     }
