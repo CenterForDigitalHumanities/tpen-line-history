@@ -53,6 +53,7 @@ class TPENLineHistory extends HTMLElement {
     connectedCallback() {
         this.render()
         this.setupEventListeners()
+        .then(() => this.handleLineChange(TPEN.activeLine))
     }
 
     disconnectedCallback() {
