@@ -16,6 +16,8 @@ A fourth layer, cross-repo smoke checks, validates known integration anchors in 
 - `npm run test`: Runs contract + api + e2e
 - `npm run test:integration`: Cross-repo TPEN-interfaces smoke checks
 - `npm run test:main`: Full stack used for main branch verification
+- `npm run coverage`: c8 coverage for node:test contract + api layers
+- `npm run coverage:html`: c8 HTML coverage report for node:test layers
 
 ## Prerequisites
 
@@ -24,6 +26,15 @@ A fourth layer, cross-repo smoke checks, validates known integration anchors in 
 - For Playwright tests: run `npm run test:install-browsers` once locally
 
 ## Test Layers
+
+## Coverage
+
+Coverage is generated with c8 for node:test suites only (contract + api).
+
+- `npm run coverage` writes text and lcov output.
+- `npm run coverage:html` writes an HTML coverage report.
+
+Playwright browser tests are kept separate from c8 in this setup.
 
 ### 1) Contract Tests
 
