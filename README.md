@@ -80,10 +80,10 @@ async function loadAnnotationPage(annotationPageUri) {
   
   // Convert annotations to line format
   const lines = annotationPage.items.map((annotation, index) => {
-    // Extract coordinates from selector value (xywh=pixel:x,y,w,h)
+    // Extract coordinates from selector value (xywh=x,y,w,h)
     let coordinates = { x: 0, y: 0, width: 100, height: 50 };
     if (annotation.target?.selector?.value) {
-      const match = annotation.target.selector.value.match(/xywh=pixel:(\\d+),(\\d+),(\\d+),(\\d+)/);
+      const match = annotation.target.selector.value.match(/xywh=(\\d+),(\\d+),(\\d+),(\\d+)/);
       if (match) {
         coordinates = {
           x: parseInt(match[1]),
@@ -210,9 +210,21 @@ tpen-line-history/
 
 ### Testing the Component
 
-1. Open `demo.html` in a web browser
-2. Click on different lines to see their history
-3. Observe how text changes and bounding changes are displayed
+This repository has executable tests for interface and integration behavior.
+
+Quick commands:
+
+1. `npm run test:contract`
+2. `npm run test:api`
+3. `npm run test:e2e`
+4. `npm run test`
+
+Cross-repo smoke tests:
+
+1. `npm run test:integration`
+2. `npm run test:main`
+
+See `TESTING.md` for full details, CI policy, and TPEN-interfaces smoke setup.
 
 ## API Reference
 

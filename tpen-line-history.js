@@ -217,16 +217,17 @@ class TPENLineHistory extends HTMLElement {
         if (target?.selector?.value) {
             // Handle IIIF selector format
             if (target.selector) {
-                const selector = target.selector
+                const {selector} = target
                 if (selector.value) {
-                    // xywh format: xywh=pixel:x,y,w,h or xywh=x,y,w,h
-                    const match = selector.value.match(/xywh=(?:pixel:)?(\d+),(\d+),(\d+),(\d+)/)
+                    // xywh format: xywh=x,y,w,h or xywh=x,y,w,h
+                    const match = selector.value.match(/xywh=(?:)?(\d+),(\d+),(\d+),(\d+)/)
                     if (match) {
+                        const [, x, y, width, height] = match
                         return {
-                            x: parseInt(match[1]),
-                            y: parseInt(match[2]),
-                            width: parseInt(match[3]),
-                            height: parseInt(match[4])
+                            x: parseInt(x),
+                            y: parseInt(y),
+                            width: parseInt(width),
+                            height: parseInt(height)
                         }
                     }
                 }
