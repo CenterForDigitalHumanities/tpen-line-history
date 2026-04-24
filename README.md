@@ -59,7 +59,7 @@ window.TPEN.eventDispatcher.dispatchEvent(
   new CustomEvent('tpen-active-line-updated', {
     detail: {
       '@id': 'https://devstore.rerum.io/v1/id/...',
-      uri: 'https://devstore.rerum.io/v1/id/...',
+      uri: 'https://store.rerum.io/v1/id/...',
       text: 'Transcription text',
       x: 100,
       y: 150,
