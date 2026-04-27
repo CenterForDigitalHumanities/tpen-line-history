@@ -18,7 +18,7 @@ jobs:
           cache: npm
           cache-dependency-path: test/package-lock.json
 
-      - run: npm ci
+      - run: npm ci --include=dev
         working-directory: test
       - run: npm run lint
         working-directory: test
@@ -44,7 +44,7 @@ jobs:
           cache: npm
           cache-dependency-path: test/package-lock.json
 
-      - run: npm ci
+      - run: npm ci --include=dev
         working-directory: test
       - run: npm run test:compat
         working-directory: test
