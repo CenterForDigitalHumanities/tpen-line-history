@@ -1,17 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-// =============================================================================
-// Embedded UI Tests
-// Playwright is configured to run in a 400×768 portrait viewport,
-// representing the component embedded as a portrait third-width panel
-// in split-screen TPEN-interfaces layouts.
-//
-// Tests validate:
-// - Component renders correctly in the embedded viewport
-// - Custom events (TPEN.eventDispatcher) flow correctly
-// - User interactions work in narrow portrait context
-// =============================================================================
-
 const mockLine = {
   id: 'https://devstore.rerum.io/v1/id/mock-line-1',
   type: 'Annotation',
