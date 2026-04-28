@@ -134,11 +134,9 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data object
      */
     async fetchLineHistory(lineData) {
-        console.log('fetchLineHistory called with:', lineData)
         // If the line has a URI, fetch its history using RerumHistoryData
         if (lineData.uri || lineData['@id']) {
             const uri = lineData.uri || lineData['@id']
-            console.log('Using URI for history fetch:', uri)
             try {
                 // Clean up previous history data instance
                 if (this.rerumHistoryData) {
@@ -166,7 +164,6 @@ class TPENLineHistory extends HTMLElement {
                 this.historyGraph = null
             }
         } else {
-            console.log('No URI found in line data, using fallback')
             // No URI, just show current state
             this.historyData = [lineData]
             this.historyGraph = null

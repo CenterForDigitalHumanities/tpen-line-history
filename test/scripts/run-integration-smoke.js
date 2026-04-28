@@ -4,6 +4,25 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 
+// =============================================================================
+// Cross-Repo Compatibility Smoke Tests
+//
+// Purpose: Validate this component remains integrated with TPEN-interfaces.
+// This script is OPTIONAL for local development, runs only in CI.
+//
+// Checks:
+// - TPEN-interfaces still references tpen-line-history component
+// - TPEN-interfaces still emits/references tpen-active-line-updated event
+// - No silent breakage in split-screen integration points
+//
+// Usage:
+//   npm run test:compat     # Run manually (optional)
+//   CI includes via test:ci # Runs on main branch
+//
+// When TPEN-interfaces publishes a shared embed contract module (@tpen/embed-contract),
+// this script will be replaced or augmented with contract version pinning checks.
+// =============================================================================
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '../..')

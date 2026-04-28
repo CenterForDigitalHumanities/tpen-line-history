@@ -14,15 +14,20 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
 
-      - run: npm ci
+      - run: npm install
+        working-directory: test
       - run: npm run lint
+        working-directory: test
       - run: npm run test:contract
+        working-directory: test
       - run: npm run test:api
+        working-directory: test
       - run: npx playwright install --with-deps chromium
+        working-directory: test
       - run: npm run test:e2e
+        working-directory: test
 
   integration-smoke:
     if: github.ref == 'refs/heads/main'
@@ -33,8 +38,9 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
 
-      - run: npm ci
-      - run: npm run test:integration
+      - run: npm install
+        working-directory: test
+      - run: npm run test:compat
+        working-directory: test

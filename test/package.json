@@ -10,7 +10,7 @@
     "test:contract": "node --test contracts/*.test.js",
     "test:api": "node --test api/*.test.js",
     "test:e2e": "playwright test",
-    "test:integration": "node scripts/run-integration-smoke.js",
+   "test:integration": "node scripts/run-integration-smoke.js",
     "test:main": "npm run test && npm run test:integration",
     "test:install-browsers": "playwright install chromium",
     "coverage": "c8 --reporter=text --reporter=lcov node --test contracts/*.test.js api/*.test.js",

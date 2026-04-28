@@ -8,11 +8,11 @@ A custom web component that displays the history of transcription lines from TPE
 - **Line History Display**: Shows all historical versions of a transcription line in a vertical list
 - **Text Change Tracking**: Displays the evolution of transcription text over time
 - **Image Bounding Visualization**: Shows changes to the image coordinates and dimensions for each line version
-- **TPEN Integration**: Listens to TPEN.eventdispatcher for active line changes
-- **Split Screen Ready**: Designed to work in a split-screen layout as a tall rectangular panel
+- **TPEN Integration**: Listens to `TPEN.eventDispatcher` for active line changes via custom events
+- **Embedded Ready**: Designed for portrait third-width embedding (400px wide, portrait orientation) in split-screen interfaces
 - **Version Relationship Tracking**: Builds proper parent-child relationships between versions using RERUM heuristics
 - **Multiple Endpoint Support**: Automatically fetches from both `/history/` and `/since/` endpoints
-- **Responsive Design**: Adapts to different screen sizes
+- **Responsive Design**: Adapts to narrow embedded viewport
 
 ## Installation
 
@@ -48,17 +48,18 @@ A custom web component that displays the history of transcription lines from TPE
 
 ### With TPEN Event Dispatcher
 
-The component automatically listens for events from `TPEN.eventdispatcher`:
+The component automatically listens for active line change events from `TPEN.eventDispatcher`:
 
 ```javascript
-// The component listens for these events:
-// - 'tpen-set-line': When a user selects a line
+// The component listens for this event:
+// - 'tpen-active-line-updated': Fired when TPEN updates the active line
 
-// Example: Trigger line selection
-window.TPEN.eventdispatcher.dispatchEvent(
-  new CustomEvent('tpen-set-line', {
+// Your code (e.g., in TPEN interfaces) should dispatch:
+window.TPEN.eventDispatcher.dispatchEvent(
+  new CustomEvent('tpen-active-line-updated', {
     detail: {
       '@id': 'https://devstore.rerum.io/v1/id/...',
+      uri: 'https://store.rerum.io/v1/id/...',
       text: 'Transcription text',
       x: 100,
       y: 150,
@@ -68,6 +69,12 @@ window.TPEN.eventdispatcher.dispatchEvent(
   })
 );
 ```
+
+### Integration with TPEN-interfaces
+
+This component is designed to embed in [TPEN-interfaces](https://github.com/CenterForDigitalHumanities/TPEN-interfaces) as a portrait panel in split-screen layouts.
+
+**Integration contract:** Channel names and payload shapes are defined in the shared embed contract (see [TESTING.md](TESTING.md) for details). When TPEN-interfaces publishes the contract module, both repositories will validate automatically.
 
 ### With RERUM Annotation Data
 
