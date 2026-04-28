@@ -24,11 +24,13 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+test-results/
 
 # Temporary files
 tmp/
 temp/
 *.tmp
+.tmp/
 
 # Environment
 .env

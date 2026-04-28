@@ -190,10 +190,10 @@
                 for (let i = 0; i < annotations.length; i++) {
                     const annotation = annotations[i]
                     
-                    // Extract coordinates from selector value (xywh=pixel:x,y,w,h)
+                    // Extract coordinates from selector value (xywh=x,y,w,h)
                     let coordinates = { x: 0, y: 0, width: 100, height: 50 }
                     if (annotation.target?.selector?.value) {
-                        const match = annotation.target.selector.value.match(/xywh=pixel:(\d+),(\d+),(\d+),(\d+)/)
+                        const match = annotation.target.selector.value.match(/xywh=(\d+),(\d+),(\d+),(\d+)/)
                         if (match) {
                             coordinates = {
                                 x: parseInt(match[1]),

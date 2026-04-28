@@ -34,6 +34,15 @@ if (typeof customElements !== 'undefined' && !customElements.get('tpen-line-imag
 }
 
 import { RerumHistoryData } from 'https://cubap.github.io/rerum-history-component/src/rerum-history-tree.js'
+import {
+    getTimestamp,
+    getLineText,
+    getLineBounding,
+    getLineImageSource,
+    formatTimestamp,
+    formatTimeAgo,
+    boundingChanged
+} from './line-history-utils.js'
 
 /**
  * Custom element for displaying TPEN line history
@@ -49,6 +58,15 @@ class TPENLineHistory extends HTMLElement {
         this.rerumHistoryData = null
         this.historyGraph = null
     }
+
+    // Keep utility method names on the class without redundant pass-through wrappers.
+    getTimestamp = getTimestamp
+    getLineText = getLineText
+    getLineBounding = getLineBounding
+    getLineImageSource = getLineImageSource
+    formatTimestamp = formatTimestamp
+    formatTimeAgo = formatTimeAgo
+    boundingChanged = boundingChanged
 
     connectedCallback() {
         this.render()
@@ -116,11 +134,9 @@ class TPENLineHistory extends HTMLElement {
      * @param {Object} lineData - The line data object
      */
     async fetchLineHistory(lineData) {
-        console.log('fetchLineHistory called with:', lineData)
         // If the line has a URI, fetch its history using RerumHistoryData
         if (lineData.uri || lineData['@id']) {
             const uri = lineData.uri || lineData['@id']
-            console.log('Using URI for history fetch:', uri)
             try {
                 // Clean up previous history data instance
                 if (this.rerumHistoryData) {
@@ -148,124 +164,10 @@ class TPENLineHistory extends HTMLElement {
                 this.historyGraph = null
             }
         } else {
-            console.log('No URI found in line data, using fallback')
             // No URI, just show current state
             this.historyData = [lineData]
             this.historyGraph = null
         }
-    }
-
-    /**
-     * Extract timestamp from a line object using RERUM heuristics
-     * @param {Object} line - The line object
-     * @returns {Number} Timestamp in milliseconds
-     */
-    getTimestamp(line) {
-        const createdAt = line?.__rerum?.createdAt ?? line?.createdAt ?? line?.modified ?? line?.created ?? line?.timestamp
-        const isOverwritten = line?.__rerum?.isOverwritten ?? line?.isOverwritten
-
-        const timestamps = [createdAt, isOverwritten].filter(Boolean).map(ts => {
-            if (typeof ts === 'string') {
-                const date = new Date(ts)
-                return isNaN(date.getTime()) ? null : date.getTime()
-            }
-            if (typeof ts === 'number') return ts
-            return null
-        }).filter(t => t !== null)
-
-        return timestamps.length > 0 ? Math.max(...timestamps) : 0
-    }
-
-    /**
-     * Extract text from a line object
-     * @param {Object} line - The line object
-     * @returns {String} The text content
-     */
-    getLineText(line) {
-        // Handle IIIF annotation body structure
-        if (line.body) {
-            // If body is an object with value property (IIIF TextualBody)
-            if (typeof line.body === 'object' && line.body.value) {
-                return line.body.value
-            }
-            // If body is an array, look for TextualBody with value
-            if (Array.isArray(line.body)) {
-                for (const bodyItem of line.body) {
-                    if (bodyItem?.value) {
-                        return bodyItem.value
-                    }
-                }
-            }
-            // If body is a string
-            if (typeof line.body === 'string') {
-                return line.body
-            }
-        }
-
-        // Support various other text property names
-        return line.text ?? line.content ?? line['cnt:chars'] ?? line.value ?? ''
-    }
-
-    /**
-     * Extract image bounding information from a line object
-     * @param {Object} line - The line object
-     * @returns {Object|null} The bounding box information
-     */
-    getLineBounding(line) {
-        // Support various bounding property structures
-        const target = line.target ?? line.on
-        if (target?.selector?.value) {
-            // Handle IIIF selector format
-            if (target.selector) {
-                const selector = target.selector
-                if (selector.value) {
-                    // xywh format: xywh=pixel:x,y,w,h or xywh=x,y,w,h
-                    const match = selector.value.match(/xywh=(?:pixel:)?(\d+),(\d+),(\d+),(\d+)/)
-                    if (match) {
-                        return {
-                            x: parseInt(match[1]),
-                            y: parseInt(match[2]),
-                            width: parseInt(match[3]),
-                            height: parseInt(match[4])
-                        }
-                    }
-                }
-            }
-        }
-
-        // Direct bounding box properties
-        if (line.x !== undefined && line.y !== undefined &&
-            (line.width !== undefined || line.w !== undefined) &&
-            (line.height !== undefined || line.h !== undefined)) {
-            return {
-                x: line.x,
-                y: line.y,
-                width: line.width ?? line.w,
-                height: line.height ?? line.h
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * Extract image source from a line object
-     * @param {Object} line - The line object
-     * @returns {String|null} The image source URL
-     */
-    getLineImageSource(line) {
-        const target = line.target ?? line.on
-        if (target?.source) {
-            // Handle IIIF target format
-            return target.source
-        }
-        // Handle direct target URL
-        if (typeof target === 'string') {
-            return target
-        }
-
-        // Check for direct image properties
-        return line.image ?? line.src ?? line.source ?? null
     }
 
     /**
@@ -300,50 +202,6 @@ class TPENLineHistory extends HTMLElement {
         }
 
         return { manifest, canvas }
-    }
-
-    /**
-     * Format a timestamp for display
-     * @param {String|Number} timestamp - The timestamp to format
-     * @returns {String} Formatted date string
-     */
-    formatTimestamp(timestamp) {
-        if (!timestamp) return 'Unknown date'
-        const date = new Date(timestamp)
-        return date.toLocaleString()
-    }
-
-    /**
-     * Format time ago string like RerumHistoryTree
-     * @param {Number} timestamp - Timestamp in milliseconds
-     * @returns {String} Time ago string
-     */
-    formatTimeAgo(timestamp) {
-        if (!timestamp) return ''
-
-        const now = Date.now()
-        const diff = now - timestamp
-        const minutes = Math.floor(diff / 60000)
-        const hours = Math.floor(diff / 3600000)
-        const days = Math.floor(diff / 86400000)
-
-        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
-        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
-        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
-        return 'just now'
-    }
-
-    /**
-     * Compare two bounding boxes
-     * @param {Object} box1 - First bounding box
-     * @param {Object} box2 - Second bounding box
-     * @returns {Boolean} True if boxes are different
-     */
-    boundingChanged(box1, box2) {
-        if (!box1 && !box2) return false
-        if (!box1 || !box2) return true
-        return box1.x !== box2.x || box1.y !== box2.y ||
-            box1.width !== box2.width || box1.height !== box2.height
     }
 
     /**

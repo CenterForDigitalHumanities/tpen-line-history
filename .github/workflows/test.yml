@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  local-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - run: npm install
+        working-directory: test
+      - run: npm run lint
+        working-directory: test
+      - run: npm run test:contract
+        working-directory: test
+      - run: npm run test:api
+        working-directory: test
+      - run: npx playwright install --with-deps chromium
+        working-directory: test
+      - run: npm run test:e2e
+        working-directory: test
+
+  integration-smoke:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: local-tests
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - run: npm install
+        working-directory: test
+      - run: npm run test:compat
+        working-directory: test
