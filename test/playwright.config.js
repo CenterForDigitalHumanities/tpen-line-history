@@ -10,7 +10,7 @@ export default defineConfig({
     viewport: { width: 400, height: 768 }
   },
   webServer: {
-    command: 'node scripts/start-test-server.js',
+    command: 'node test/scripts/start-test-server.js',
     url: 'http://127.0.0.1:4173/health',
     reuseExistingServer: !globalThis.process?.env?.CI,
     timeout: 30_000
